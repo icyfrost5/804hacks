@@ -1,0 +1,5 @@
+fastapi>=0.115
+openmeteo-requests>=1.7
+requests>=2.32
+requests-cache>=1.2
+retry-requests>=2.0
