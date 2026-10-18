@@ -25,7 +25,7 @@ AIR_QUALITY_VARIABLES = [
     ("US AQI", "us_aqi", "AQI"),
 ]
 LOCATIONS = [
-    ("Alexandria", 38.820450, -77.050552),
+    ("Alexandria",38.820450, -77.050552),
     ("Fairfax", 38.798631, -77.328126),
     ("Arlington", 38.8810, -77.1043),
     ("Manassas", 38.7509, -77.4753),
@@ -107,6 +107,51 @@ def nearest_city(latitude, longitude):
     )[0]
 
 
+def air_quality_recommendation(aqi):
+    if aqi is None:
+        return "Check AirNow or a nearby regulatory monitor for a current AQI; this model did not return a value."
+    if aqi <= 50:
+        return f"AQI {aqi:.0f} is Good. Use this hourly model estimate as regional context and check AirNow for local monitor readings."
+    if aqi <= 100:
+        return f"AQI {aqi:.0f} is Moderate. Sensitive people should watch for symptoms during prolonged outdoor activity; verify conditions with AirNow."
+    if aqi <= 150:
+        return f"AQI {aqi:.0f} is Unhealthy for Sensitive Groups. Sensitive people should reduce prolonged or heavy outdoor activity; check AirNow for current local guidance."
+    if aqi <= 200:
+        return f"AQI {aqi:.0f} is Unhealthy. Limit prolonged or heavy outdoor activity, especially for sensitive people, and verify with AirNow."
+    if aqi <= 300:
+        return f"AQI {aqi:.0f} is Very Unhealthy. Reduce outdoor exposure and check AirNow or local health guidance for current conditions."
+    return f"AQI {aqi:.0f} is Hazardous. Avoid outdoor exertion and follow local health guidance; confirm with a regulatory monitor."
+
+
+def water_quality_recommendation(readings, sample_date):
+    actions = {
+        "dissolved oxygen": "check water temperature and time of collection, then compare with Virginia aquatic-life criteria",
+        "nitrate": "confirm whether the result is reported as nitrate or nitrate-nitrogen before comparing with the applicable criterion",
+        "ph": "compare the measured pH directly with Virginia criteria; pH changes should not be expressed as percentages",
+        "turbidity": "check for recent rain, erosion, or upstream disturbance and compare with an upstream sample",
+        "total suspended solids": "check recent runoff or discharge activity and compare with an upstream or repeat sample",
+        "escherichia coli": "compare the reported unit and result with recreational-water criteria before making a safety decision; collect a confirmatory sample",
+        "oil and grease": "check nearby discharge or spill reports and collect a confirmatory sample if the result is unexpected",
+    }
+    guidance = []
+    for reading in readings:
+        metric = reading["metric"]
+        value = reading["value"]
+        unit = reading["unit"]
+        baseline = reading.get("baseline")
+        measurement = f"{metric} {value:g} {unit}".strip()
+        if isinstance(baseline, (int, float)):
+            measurement += f" (reference {baseline:g} {unit})"
+        next_step = actions.get(metric.lower(), "compare with applicable Virginia water-quality criteria")
+        guidance.append(f"{measurement}: {next_step}")
+
+    details = "; ".join(guidance) or "review the reported result and collection method"
+    return (
+        f"This WQP sample is dated {sample_date}; check for a newer sample before acting. "
+        f"{details}."
+    )
+
+
 def get_air_quality_data():
     parameters = {
         "latitude": [latitude for _, latitude, _ in LOCATIONS],
@@ -159,19 +204,12 @@ def get_air_quality_data():
             status = "Watch"
             baseline = None
             issue = "US AQI is unavailable for this location."
-            recommendation = "Check the latest local air-quality guidance."
         else:
             status = "Normal" if aqi <= 50 else "Watch" if aqi <= 100 else "Anomaly"
             aqi_reading = next(reading for reading in readings if reading["metric"] == "US AQI")
             baseline = aqi_reading["baseline"]
             issue = f"Current US AQI is {aqi:.0f}."
-            recommendation = (
-                "Air quality is generally good; continue routine monitoring."
-                if status == "Normal"
-                else "Review current air-quality guidance, especially for sensitive groups."
-                if status == "Watch"
-                else "Review official air-quality guidance and limit exposure as appropriate."
-            )
+        recommendation = air_quality_recommendation(aqi)
 
         sites.append({
             "id": site_id,
@@ -352,10 +390,7 @@ def get_water_quality_data():
                     f"Reported {category.lower()} sample collected {record['date']}. "
                     "This historical sample has not been screened against a water-quality standard."
                 ),
-                "recommendation": (
-                    "Interpret the result using its sampling context and applicable "
-                    "water-quality criteria."
-                ),
+                "recommendation": water_quality_recommendation(readings, record["date"]),
                 "readings": readings,
                 "observed_at": record["date"],
                 "source": "Water Quality Portal",
@@ -426,6 +461,7 @@ def get_biodiversity_data():
         scientific_name = species_name(occurrence)
         observed_at = occurrence.get("eventDate", "Date not supplied")
         occurrence_id = occurrence.get("key")
+        source_url = f"https://www.gbif.org/occurrence/{occurrence_id}"
         baseline = prior_counts[(city, scientific_name)]
         sites.append({
             "name": scientific_name,
@@ -444,7 +480,9 @@ def get_biodiversity_data():
                 "estimate population size or trend."
             ),
             "recommendation": (
-                "Review the observation and identification in its original dataset."
+                f"Open GBIF occurrence {occurrence_id} to verify the identification, date, "
+                "and coordinate precision. Compare nearby verified records; monthly "
+                "sighting counts reflect reporting effort, not population size."
             ),
             "readings": [{
                 "metric": "Species observation",
@@ -455,7 +493,7 @@ def get_biodiversity_data():
             }],
             "observed_at": observed_at,
             "source": "GBIF",
-            "source_url": f"https://www.gbif.org/occurrence/{occurrence_id}",
+            "source_url": source_url,
             "license": occurrence.get("license", "Not supplied"),
         })
 
