@@ -1,0 +1,836 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoSentinel | Virginia Environmental Monitor</title>
+
+  <!-- Leaflet map stylesheet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <style>
+    :root {
+      --bg: #0b1513;
+      --panel: #14241e;
+      --panel2: #1b3027;
+      --line: #2b473a;
+      --text: #edf7ef;
+      --muted: #a3b9ab;
+      --green: #83e0a4;
+      --yellow: #ffd166;
+      --red: #ff7777;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      padding: 24px 15px;
+      background: #08120f;
+      border-right: 1px solid var(--line);
+    }
+
+    .brand {
+      margin-bottom: 30px;
+      font-size: 23px;
+      font-weight: bold;
+      color: var(--green);
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    .nav-label {
+      margin: 20px 10px 10px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      display: block;
+      padding: 13px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      text-decoration: none;
+      text-align: left;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active {
+      background: var(--panel2);
+      border-color: var(--line);
+      color: white;
+    }
+
+    main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    h1 {
+      margin: 8px 0;
+      font-size: clamp(25px, 3vw, 36px);
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .subtitle,
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .connection-status {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      color: var(--muted);
+      background: var(--panel);
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 13px;
+      margin-bottom: 18px;
+    }
+
+    .metric,
+    .panel {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--panel);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 29px;
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.9fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      margin-bottom: 16px;
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .panel-heading h2 {
+      margin-bottom: 4px;
+    }
+
+    .panel-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* IMPORTANT: Leaflet needs a defined height. */
+    #map {
+      width: 100%;
+      height: 480px;
+      min-height: 350px;
+      border-radius: 12px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+      border-radius: 50%;
+    }
+
+    .normal-dot { background: #3dbb78; }
+    .watch-dot { background: #ffd166; }
+    .alert-dot { background: #ff7777; }
+
+    .field {
+      min-width: 150px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      outline: none;
+      background: #0b1913;
+      color: var(--text);
+    }
+
+    .field:focus {
+      border-color: var(--green);
+    }
+
+    .search {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      padding: 10px 13px;
+      border-radius: 9px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .primary-btn {
+      border: 1px solid var(--green);
+      background: var(--green);
+      color: #092016;
+    }
+
+    .secondary-btn {
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: white;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 12px;
+    }
+
+    th {
+      background: var(--panel2);
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+
+    tbody tr:hover {
+      background: var(--panel2);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .site-sub {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .status.Normal {
+      background: #173e2b;
+      color: #8ce5aa;
+    }
+
+    .status.Watch {
+      background: #45381b;
+      color: #ffdc80;
+    }
+
+    .status.Anomaly {
+      background: #482626;
+      color: #ff9c9c;
+    }
+
+    .alert-card {
+      padding: 13px;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #102019;
+    }
+
+    .alert-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .detail-cell {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0d1b15;
+    }
+
+    .detail-cell span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .detail-cell strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 17px;
+    }
+
+    .detail-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .empty {
+      padding: 22px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .analysis-output {
+      min-height: 140px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #091610;
+      white-space: pre-wrap;
+      font-size: 13px;
+    }
+
+    .scenario-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .scenario-form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .range-row input {
+      flex: 1;
+      accent-color: var(--green);
+    }
+
+    .range-row output {
+      min-width: 38px;
+      color: var(--text);
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .scenario-result {
+      min-height: 260px;
+    }
+
+    .risk-score {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .risk-score strong {
+      font-size: 44px;
+      line-height: 1;
+    }
+
+    .risk-meter {
+      height: 8px;
+      margin: 14px 0 20px;
+      border-radius: 99px;
+      background: var(--panel2);
+      overflow: hidden;
+    }
+
+    .risk-meter span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: var(--green);
+      transition: width 250ms ease, background-color 250ms ease;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+      background: #14241e;
+      color: #edf7ef;
+    }
+
+    @media (max-width: 1000px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .columns, .scenario-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .app { grid-template-columns: 1fr; }
+      aside { padding: 14px; }
+      .brand { margin-bottom: 12px; }
+      nav { display: flex; overflow-x: auto; }
+      .nav-btn { flex-shrink: 0; }
+      main { padding: 17px 12px; }
+      #map { height: 390px; }
+      .metric { padding: 13px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      EcoSentinel
+      <small>VIRGINIA ENVIRONMENTAL WATCH</small>
+    </div>
+
+    <div class="nav-label">Workspace</div>
+
+    <nav>
+      <a class="nav-btn" href="?module=overview" data-page="overview">◫ Overview</a>
+      <a class="nav-btn" href="?module=sites" data-page="sites">⌖ Monitoring Sites</a>
+      <a class="nav-btn" href="?module=alerts" data-page="alerts">⚑ Anomaly Alerts</a>
+      <a class="nav-btn" href="?module=analysis" data-page="analysis">✳ Environmental Analysis</a>
+      <a class="nav-btn" href="?module=environment-test-data" data-page="environment-test-data">◉ Environment Test Data</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Environmental intelligence platform</div>
+        <h1 id="pageTitle">Virginia Overview</h1>
+        <p class="subtitle" id="pageSubtitle">
+          Environmental monitoring workspace for connected data sources.
+        </p>
+      </div>
+      <div class="connection-status">Loading environmental data…</div>
+    </header>
+
+    <!-- OVERVIEW -->
+    <section class="page active" id="page-overview">
+      <div class="metrics">
+        <div class="metric">
+          <span>Monitoring records</span>
+          <strong id="metricSites">—</strong>
+          <small id="metricSitesNote">Loading data…</small>
+        </div>
+        <div class="metric">
+          <span>Active anomalies</span>
+          <strong id="metricAlerts">—</strong>
+          <small id="metricAlertsNote">Loading data…</small>
+        </div>
+        <div class="metric">
+          <span>Categories</span>
+          <strong>4</strong>
+          <small>Air, water, waste, biodiversity</small>
+        </div>
+        <div class="metric">
+          <span>Sites to review</span>
+          <strong id="metricReview">—</strong>
+          <small id="metricReviewNote">Loading data…</small>
+        </div>
+      </div>
+
+      <div class="columns">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Virginia Monitoring Map</h2>
+              <p id="mapDescription">Loading monitoring locations…</p>
+            </div>
+            <button class="secondary-btn" id="resetMapBtn">Reset map</button>
+          </div>
+
+          <div id="map"></div>
+
+          <div class="legend">
+            <span><i class="legend-dot normal-dot"></i>Normal</span>
+            <span><i class="legend-dot watch-dot"></i>Watch</span>
+            <span><i class="legend-dot alert-dot"></i>Anomaly</span>
+          </div>
+        </section>
+
+        <div>
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Selected Site Details</h2>
+                <p>Choose a marker or a site in the table.</p>
+              </div>
+            </div>
+            <div id="sensorDetails">
+              <div class="empty">Select a marker or monitoring record to view its details.</div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Recent Alerts</h2>
+                <p>Priority findings from connected monitoring data.</p>
+              </div>
+              <a class="secondary-btn" href="?module=alerts" data-goto="alerts">View all</a>
+            </div>
+            <div id="recentAlerts"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- MONITORING SITES -->
+    <section class="page" id="page-sites">
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Monitoring Sites</h2>
+            <p>Search by city, site name, issue, or category.</p>
+          </div>
+          <span class="status Normal" id="siteCountTag">Awaiting data</span>
+        </div>
+
+        <div class="toolbar">
+          <input
+            class="field search"
+            id="sensorSearch"
+            type="search"
+            placeholder="Search sites..."
+            aria-label="Search monitoring sites"
+          >
+
+          <select class="field" id="sensorTypeFilter" aria-label="Filter category">
+            <option value="all">All categories</option>
+            <option value="Air">Air quality</option>
+            <option value="Water">Water quality</option>
+            <option value="Waste">Waste</option>
+            <option value="Biodiversity">Biodiversity</option>
+          </select>
+
+          <select class="field" id="sensorStatusFilter" aria-label="Filter status">
+            <option value="all">All statuses</option>
+            <option value="Normal">Normal</option>
+            <option value="Watch">Watch</option>
+            <option value="Anomaly">Anomaly</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Site</th>
+                <th>Category</th>
+                <th>Reading</th>
+                <th>Status</th>
+                <th>Data type</th>
+              </tr>
+            </thead>
+            <tbody id="sensorTable"></tbody>
+          </table>
+        </div>
+
+        <p class="footer-note">
+          Monitoring records will appear when the backend data provider is connected.
+        </p>
+      </section>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="page" id="page-alerts">
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Anomaly Alerts</h2>
+            <p>Findings generated from connected monitoring records.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <select class="field" id="alertTypeFilter">
+            <option value="all">All categories</option>
+            <option value="Air">Air quality</option>
+            <option value="Water">Water quality</option>
+            <option value="Waste">Waste</option>
+            <option value="Biodiversity">Biodiversity</option>
+          </select>
+
+          <select class="field" id="alertStatusFilter">
+            <option value="all">All severities</option>
+            <option value="Anomaly">Anomaly</option>
+            <option value="Watch">Watch</option>
+          </select>
+        </div>
+
+        <div id="allAlerts"></div>
+      </section>
+    </section>
+
+    <!-- ANALYSIS -->
+    <section class="page" id="page-analysis">
+      <div class="columns">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Environmental Analysis</h2>
+              <p>Summarize connected monitoring records.</p>
+            </div>
+          </div>
+
+          <p class="muted">
+            Current readings and source baselines are summarized by category and metric.
+          </p>
+
+          <button class="primary-btn" id="analyzeBtn" disabled>Analyze current data</button>
+
+          <div style="height:14px"></div>
+
+          <div class="analysis-output" id="analysisOutput">
+            No monitoring data is connected.
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Recommended Response Process</h2>
+
+          <div class="alert-card">
+            <strong>1. Verify the signal</strong>
+            <p>Repeat the sample and check sensor calibration.</p>
+          </div>
+
+          <div class="alert-card">
+            <strong>2. Gather context</strong>
+            <p>Review weather, nearby activity, and surrounding conditions.</p>
+          </div>
+
+          <div class="alert-card">
+            <strong>3. Investigate safely</strong>
+            <p>Document evidence and contact relevant environmental authorities when warranted.</p>
+          </div>
+
+          <div class="alert-card">
+            <strong>4. Track the outcome</strong>
+            <p>Record follow-up measurements and check whether the issue persists.</p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ENVIRONMENT SCENARIO SIMULATOR -->
+    <section class="page" id="page-environment-test-data">
+      <div class="scenario-layout">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Environment Test Data</h2>
+              <p>Scenario projections use averages from matching backend measurements.</p>
+            </div>
+          </div>
+
+          <form class="scenario-form" id="scenarioForm">
+            <label class="form-field" for="scenarioType">
+              Scenario
+              <select class="field" id="scenarioType">
+                <option value="air">Air pollution event</option>
+                <option value="runoff">Heavy rainfall and runoff</option>
+                <option value="heat">Prolonged extreme heat</option>
+                <option value="waste">Waste collection disruption</option>
+              </select>
+            </label>
+
+            <label class="form-field" for="scenarioSeverity">
+              Scenario intensity
+              <span class="range-row">
+                <input id="scenarioSeverity" type="range" min="1" max="5" value="3">
+                <output id="severityValue" for="scenarioSeverity">3 / 5</output>
+              </span>
+            </label>
+
+            <label class="form-field" for="scenarioDuration">
+              Duration (hours)
+              <input class="field" id="scenarioDuration" type="number" min="1" max="168" value="24" required>
+            </label>
+
+            <button class="primary-btn" type="submit">Run scenario</button>
+          </form>
+        </section>
+
+        <section class="panel scenario-result" id="scenarioResult" aria-live="polite">
+          <div class="empty">Choose scenario conditions and run the simulation to see potential impacts.</div>
+        </section>
+      </div>
+      <p class="footer-note">Each scenario averages matching backend records by metric and unit, then applies a hypothetical adjustment. This is not a forecast or a representation of measured future conditions.</p>
+    </section>
+
+  </main>
+</div>
+
+<!-- Load Leaflet BEFORE script.js. -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./script.js"></script>
+  <script>
+    (() => {
+      const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+      const isFileProtocol = window.location.protocol === "file:";
+      const pathSegments = currentPath.split("/").filter(Boolean);
+      const isHomePage = currentPath === "/" || pathSegments.length === 1 && !pathSegments[0].includes(".");
+      const isKnownHtmlPage = pathSegments.some(segment => /\.(html?|php)$/i.test(segment));
+      const is404Page = currentPath.endsWith("/404.html") || currentPath.endsWith("404.html");
+
+      if (!isFileProtocol && !is404Page && !isHomePage && !isKnownHtmlPage) {
+        const target = new URL("./404.html", window.location.href).toString();
+        window.location.replace(target);
+      }
+    })();
+  </script>

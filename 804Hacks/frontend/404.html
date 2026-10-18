@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <meta name="robots" content="noindex">
+  <title>404 | EcoSentinel</title>
+
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #101d2d;
+      --border: #26384b;
+      --text: #edf5ff;
+      --muted: #91a4ba;
+      --green: #56e39b;
+      --blue: #66baff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% 35%,
+          rgba(37, 126, 102, 0.17), transparent 55%),
+        var(--bg);
+      font-family: Inter, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(102,186,255,.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(102,186,255,.12) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 90%);
+    }
+
+    .page {
+      position: relative;
+      width: 100%;
+      max-width: 660px;
+      text-align: center;
+      padding: 48px 28px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: rgba(16, 29, 45, 0.88);
+      box-shadow: 0 24px 100px rgba(0, 0, 0, 0.25);
+      animation: appear 0.6s ease both;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 40px;
+      font-size: 15px;
+      font-weight: 750;
+      letter-spacing: 1.5px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      color: var(--green);
+      background: rgba(86, 227, 155, 0.1);
+      border: 1px solid rgba(86, 227, 155, 0.3);
+    }
+
+    .brand-mark svg {
+      width: 23px;
+      height: 23px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(102, 186, 255, 0.25);
+      border-radius: 999px;
+      color: var(--blue);
+      background: rgba(102, 186, 255, 0.07);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 12px var(--blue);
+    }
+
+    h1 {
+      margin: 18px 0 0;
+      font-size: clamp(84px, 18vw, 142px);
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: -8px;
+      color: transparent;
+      background: linear-gradient(135deg, #ffffff 15%, var(--green) 90%);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    h2 {
+      margin: 18px 0 12px;
+      font-size: clamp(23px, 5vw, 32px);
+      letter-spacing: -0.8px;
+    }
+
+    .description {
+      max-width: 430px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .signal {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 110px;
+      height: 110px;
+      margin: 30px auto;
+      color: var(--green);
+    }
+
+    .signal svg {
+      width: 54px;
+      height: 54px;
+      filter: drop-shadow(0 0 14px rgba(86, 227, 155, 0.35));
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(86, 227, 155, 0.35);
+      border-radius: 50%;
+      animation: pulse 2.8s ease-out infinite;
+    }
+
+    .ring:nth-child(2) {
+      animation-delay: 0.9s;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 19px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: var(--text);
+      background: #16263a;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s,
+        background 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      border-color: var(--green);
+    }
+
+    .button.primary {
+      color: #06150e;
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .button.primary:hover {
+      background: #79f0b1;
+    }
+
+    .footer {
+      margin-top: 38px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: #73869d;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .footer span {
+      color: var(--green);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 4px;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.72);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    @keyframes appear {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page {
+        padding: 34px 20px;
+      }
+
+      .brand {
+        margin-bottom: 30px;
+      }
+
+      h1 {
+        letter-spacing: -5px;
+      }
+
+      .button {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 4c-8 0-14 3-14 10a6 6 0 0 0 6 6c7 0 8-8 8-16Z"/>
+          <path d="M4 21c3-6 7-9 12-12"/>
+        </svg>
+      </div>
+      ECOSENTINEL
+    </div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      NAVIGATION ERROR
+    </div>
+
+    <h1>404</h1>
+
+    <div class="signal" aria-hidden="true">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <svg viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M8 8l8 8M16 8l-8 8"/>
+      </svg>
+    </div>
+
+    <h2>This path is off the map.</h2>
+
+    <p class="description">
+      The page you're looking for couldn't be found.
+      It may have moved, been renamed, or never existed.
+      Let's get you back to monitoring what matters.
+    </p>
+
+    <div class="actions">
+      <a class="button primary" href="./">
+        Return to Dashboard
+      </a>
+
+      <button class="button" id="backButton" type="button">
+        Go Back
+      </button>
+    </div>
+
+    <div class="footer">
+      <span>●</span> ENVIRONMENTAL INTELLIGENCE
+      &nbsp;·&nbsp; ECOSENTINEL
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("backButton").addEventListener("click", () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "./index.html";
+      }
+    });
+  </script>
+</body>
+</html>
