@@ -1,3 +1,14 @@
+## How to run
+Go into the main directory with the main.py file.<br><br>
+Open a terminal in that directory.<br><br>
+Using uv run `uv venv` to start a local environment inside of the folder.<br><br>
+Use `uv pip install -r requirements.txt` and `uv pip install fastapi[standard]`.<br><br>
+Run `uv run fastapi run` to start.<br><br>
+
+# **NOTICE**<br>
+# **WILL RARELY BE WORKED ON BY ME AND THE OTHER DEV, EXPECT BUGS AND PROBELMS WITH THE CURRENT VERSION AS IT IS NOT FULLY COMPLETE**
+
+<br>
 ## Inspiration
 
 Environmental data can be scattered across different sources, making it difficult to see where attention may be needed. We wanted to create a clear, approachable way to bring key environmental indicators together and help people explore them.
